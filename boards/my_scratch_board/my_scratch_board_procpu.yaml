@@ -1,0 +1,11 @@
+identifier: my_scratch_board/esp32/procpu
+name: My Scratch Board PROCPU
+type: mcu
+arch: xtensa
+toolchain:
+  - zephyr
+supported:
+  - gpio
+  - uart
+  - console
+vendor: espressif
