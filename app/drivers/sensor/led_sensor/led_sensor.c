@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  * LED Sensor driver.
- * - sensor_sample_fetch : turns the LED ON
- * - sensor_channel_get  : turns the LED OFF and returns the last state
+ * - sensor_sample_fetch      : turns the LED ON
+ * - sensor_channel_get       : turns the LED OFF and returns the last state
+ * - led_sensor_set_blink_interval : custom extension — updates blink_interval_ms
  */
 
 #include <zephyr/device.h>
@@ -12,6 +13,8 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/sensor.h>
 #include <zephyr/logging/log.h>
+
+#include "led_sensor.h"
 
 #define DT_DRV_COMPAT zephyr_led_sensor
 
@@ -22,7 +25,8 @@ struct led_sensor_config {
 };
 
 struct led_sensor_data {
-	int state; /* 1 = ON, 0 = OFF */
+	int      state;            /* 1 = ON, 0 = OFF */
+	uint32_t blink_interval_ms; /* custom parameter changed via extension API */
 };
 
 static int led_sensor_sample_fetch(const struct device *dev,
@@ -38,7 +42,7 @@ static int led_sensor_sample_fetch(const struct device *dev,
 	gpio_pin_set_dt(&cfg->led, 1);
 	data->state = 1;
 
-	LOG_INF("LED ON (sample_fetch)");
+	LOG_INF("LED ON (sample_fetch), blink_interval=%u ms", data->blink_interval_ms);
 	return 0;
 }
 
@@ -63,9 +67,21 @@ static int led_sensor_channel_get(const struct device *dev,
 	return 0;
 }
 
+/* --- Custom extension API function --- */
+static int led_sensor_set_blink_interval_impl(const struct device *dev,
+					      uint32_t interval_ms)
+{
+	struct led_sensor_data *data = dev->data;
+
+	data->blink_interval_ms = interval_ms;
+	LOG_INF("blink_interval_ms set to %u", interval_ms);
+	return 0;
+}
+
 static int led_sensor_init(const struct device *dev)
 {
 	const struct led_sensor_config *cfg = dev->config;
+	struct led_sensor_data *data = dev->data;
 
 	if (!gpio_is_ready_dt(&cfg->led)) {
 		LOG_ERR("LED GPIO not ready");
@@ -78,13 +94,23 @@ static int led_sensor_init(const struct device *dev)
 		return ret;
 	}
 
-	LOG_INF("LED sensor initialized");
+	data->blink_interval_ms = CONFIG_APP_HEARTBEAT_PERIOD_MS;
+	LOG_INF("LED sensor initialized, default blink_interval=%u ms",
+		data->blink_interval_ms);
 	return 0;
 }
 
-static DEVICE_API(sensor, led_sensor_api) = {
-	.sample_fetch = led_sensor_sample_fetch,
-	.channel_get  = led_sensor_channel_get,
+/*
+ * Custom API struct — sensor_driver_api MUST be the first member so that
+ * the standard sensor subsystem functions (sensor_sample_fetch, etc.) can
+ * safely cast dev->api to (const struct sensor_driver_api *).
+ */
+static const struct led_sensor_driver_api led_sensor_api_impl = {
+	.sensor = {
+		.sample_fetch = led_sensor_sample_fetch,
+		.channel_get  = led_sensor_channel_get,
+	},
+	.set_blink_interval = led_sensor_set_blink_interval_impl,
 };
 
 #define LED_SENSOR_INIT(inst)							\
@@ -99,6 +125,7 @@ static DEVICE_API(sensor, led_sensor_api) = {
 				     &led_sensor_cfg_##inst,			\
 				     POST_KERNEL,				\
 				     CONFIG_SENSOR_INIT_PRIORITY,		\
-				     &led_sensor_api);
+				     &led_sensor_api_impl);
 
 DT_INST_FOREACH_STATUS_OKAY(LED_SENSOR_INIT)
+
