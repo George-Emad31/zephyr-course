@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: Apache-2.0
+
+config LED_SENSOR
+	bool "LED Sensor driver"
+	default y
+	depends on DT_HAS_ZEPHYR_LED_SENSOR_ENABLED
+	select GPIO
+	help
+	  Enable the LED sensor driver that exposes an on-board LED
+	  via the Zephyr sensor API. sensor_sample_fetch turns the LED
+	  on; sensor_channel_get turns it off.

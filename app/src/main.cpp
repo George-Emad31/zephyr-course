@@ -1,30 +1,27 @@
-#include <zephyr/drivers/gpio.h>
 #include <zephyr/kernel.h>
+#include <zephyr/drivers/sensor.h>
 #include <zephyr/logging/log.h>
-
-static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(DT_ALIAS(app_led), gpios);
 
 LOG_MODULE_REGISTER(main, LOG_LEVEL_INF);
 
+static const struct device *led_sensor = DEVICE_DT_GET(DT_NODELABEL(led_sensor_node));
+
 int main(void) {
-  bool led_state = true;
-
-  if (!gpio_is_ready_dt(&led)) {
-    LOG_ERR("app-led gpio not ready");
+  if (!device_is_ready(led_sensor)) {
+    LOG_ERR("LED sensor device not ready");
     return 0;
   }
 
-  if (gpio_pin_configure_dt(&led, GPIO_OUTPUT_ACTIVE) < 0) {
-    LOG_ERR("Failed to configure app-led pin");
-    return 0;
-  }
-
-  LOG_INF("Heartbeat LED configured. Period: %d ms", CONFIG_APP_HEARTBEAT_PERIOD_MS);
+  LOG_INF("LED sensor ready. Starting loop...");
 
   while (1) {
-    gpio_pin_set_dt(&led, led_state);
-    led_state = !led_state;
-    LOG_INF("LED state: %s", led_state ? "ON" : "OFF");
+    /* Turn LED ON via sample_fetch */
+    sensor_sample_fetch(led_sensor);
+    k_msleep(CONFIG_APP_HEARTBEAT_PERIOD_MS);
+
+    /* Turn LED OFF via channel_get */
+    struct sensor_value val;
+    sensor_channel_get(led_sensor, SENSOR_CHAN_LIGHT, &val);
     k_msleep(CONFIG_APP_HEARTBEAT_PERIOD_MS);
   }
   return 0;

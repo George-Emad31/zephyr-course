@@ -1,5 +1,7 @@
 mainmenu "Zephyr Course Application"
 
+rsource "drivers/sensor/led_sensor/Kconfig"
+
 menuconfig LED_SUBSYSTEM
 	bool "LED Subsystem"
 	default y

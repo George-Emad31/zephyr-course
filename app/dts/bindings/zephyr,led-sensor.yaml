@@ -1,0 +1,14 @@
+# Copyright (c) 2024 My Project
+# SPDX-License-Identifier: Apache-2.0
+
+description: LED exposed as a sensor device
+
+compatible: "zephyr,led-sensor"
+
+include: base.yaml
+
+properties:
+  gpios:
+    type: phandle-array
+    required: true
+    description: GPIO connected to the LED

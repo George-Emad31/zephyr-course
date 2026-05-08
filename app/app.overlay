@@ -2,4 +2,10 @@
     aliases {
         app-led = &custom_led;
     };
+
+    led_sensor_node: led_sensor {
+        compatible = "zephyr,led-sensor";
+        gpios = <&gpio0 2 GPIO_ACTIVE_LOW>;
+        status = "okay";
+    };
 };
