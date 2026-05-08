@@ -1,13 +1,27 @@
-/ {
-    aliases {
+/{
+   aliases {
         led0 = &custom_led;
+        led1 = &red_led;
+        led2 = &green_led;
     };
 
-    leds {
+   leds {
         compatible = "gpio-leds";
         custom_led: led_0 {
-           
-            gpios = <&gpio0 2 GPIO_ACTIVE_HIGH>;
+            gpios = <&gpio0 2 GPIO_ACTIVE_LOW>;
         };
+        red_led: led_1 {
+            gpios = <&gpio0 4 GPIO_ACTIVE_HIGH>;  /* GPIO4 — red LED (GPIO3 is UART RX, avoid) */
+        };
+
+        blue_led: led_2 {
+            gpios = <&gpio0 5 GPIO_ACTIVE_HIGH>;  /* GPIO5 — blue LED */
+        };
+
+        green_led: led_3 {
+            gpios = <&gpio0 5 GPIO_ACTIVE_HIGH>;  /* GPIO5 — green LED via ~100Ω resistor */
+        };
+
     };
+
 };
