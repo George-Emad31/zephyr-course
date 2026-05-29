@@ -1,0 +1,4 @@
+tests:
+  ring_buf.all:
+    tags: ring_buf
+    harness: ztest
