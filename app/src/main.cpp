@@ -14,19 +14,6 @@ int main(void) {
     return 0;
   }
 
-  /* Custom extension API: change blink_interval_ms in the driver data */
-  led_sensor_set_blink_interval(led_sensor, 200U);
-  LOG_INF("Blink interval set to 200 ms via custom extension API");
-
-  while (1) {
-    /* Turn LED ON via sample_fetch */
-    sensor_sample_fetch(led_sensor);
-    k_msleep(200U);
-
-    /* Turn LED OFF via channel_get */
-    struct sensor_value val;
-    sensor_channel_get(led_sensor, SENSOR_CHAN_LIGHT, &val);
-    k_msleep(200U);
-  }
+  LOG_INF("LED sensor ready. Use shell: 'sensor fetch|read|info'");
   return 0;
 }
